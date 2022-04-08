@@ -23,6 +23,7 @@
 #   Indicating whether or not to schedule cron job for renewal.
 #   Runs daily but only renews if near expiration, e.g. within 10 days.
 # @param suppress_cron_output Redirect cron output to devnull
+# @param log_cron_output Redirect cron output to logger
 # @param cron_before_command Representation of a command that should be run before renewal command
 # @param cron_success_command Representation of a command that should be run if the renewal command succeeds.
 # @param cron_hour
@@ -58,6 +59,7 @@ define letsencrypt::certonly (
   Array[String[1]]                          $environment          = [],
   Boolean                                   $manage_cron          = false,
   Boolean                                   $suppress_cron_output = false,
+  Boolean                                   $log_cron_output      = false,
   Optional[String[1]]                       $cron_before_command  = undef,
   Optional[String[1]]                       $cron_success_command = undef,
   Array[Variant[Integer[0, 59], String[1]]] $cron_monthday        = ['*'],
@@ -184,6 +186,8 @@ define letsencrypt::certonly (
 
     if $suppress_cron_output {
       $croncommand = "${maincommand} > /dev/null 2>&1"
+    } elsif $log_cron_output {
+      $croncommand = "${maincommand} 2>&1 | logger -t letsencrypt-renew"
     } else {
       $croncommand = $maincommand
     }
